@@ -34,19 +34,9 @@ void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
 	}
-	else if(Attribute == GetMaxHealthAttribute())
-	{
-		//当前生命值不能高于最大生命值
-		SetHealth(FMath::Clamp(GetHealth(), 0.f, NewValue));
-	}
 	else if(Attribute == GetManaAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxMana()); 
-	}
-	else if(Attribute == GetMaxManaAttribute())
-	{
-		//当前精力值不能高于最大精力值
-		SetMana(FMath::Clamp(GetMana(), 0.f, NewValue));
 	}
 }
 
@@ -57,6 +47,15 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	FEffectProperties EffectProperties;
 
 	SetEffectProperties(Data, EffectProperties);
+
+	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+	}
+	if(Data.EvaluatedData.Attribute == GetManaAttribute())
+	{
+		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
+	}
 }
 
 void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const
