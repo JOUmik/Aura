@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/CombatInterface.h"
 #include "AuraCharacterBase.generated.h"
 
 class UGameplayEffect;
@@ -12,13 +13,14 @@ class UAttributeSet;
 class UAbilitySystemComponent;
 
 UCLASS(Abstract)
-class AURA_API AAuraCharacterBase : public ACharacter, public IAbilitySystemInterface
+class AURA_API AAuraCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatInterface
 {
 	GENERATED_BODY()
 
 public:
 	AAuraCharacterBase();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual int32 GetPlayerLevel() override;
 	FORCEINLINE UAttributeSet* GetAttributeSet() const { return AttributeSet; }
 protected:
 	virtual void BeginPlay() override;
@@ -38,6 +40,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "CPP Settings|Attributes")
 	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "CPP Settings|Attributes")
+	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
 
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffect, float Level) const;
 

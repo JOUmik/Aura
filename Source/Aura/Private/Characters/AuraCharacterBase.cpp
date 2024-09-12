@@ -29,7 +29,8 @@ void AAuraCharacterBase::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> Gameplay
 {
 	check(IsValid(GetAbilitySystemComponent()));
 	check(GameplayEffect);
-	const FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+	FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+	ContextHandle.AddSourceObject(this);
 	const FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffect, Level, ContextHandle);
 	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), GetAbilitySystemComponent());
 }
@@ -39,9 +40,15 @@ void AAuraCharacterBase::InitializeDefaultAttributes() const
 	//为属性值设置初始值最常见的方法，先在游戏开始时绑定到GameplayEffect上，player获得该Effect完成初始化
 	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
 	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
+	ApplyEffectToSelf(DefaultVitalAttributes, 1.f);
 }
 
 UAbilitySystemComponent* AAuraCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+int32 AAuraCharacterBase::GetPlayerLevel()
+{
+	return 0;
 }
