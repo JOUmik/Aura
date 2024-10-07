@@ -28,7 +28,7 @@ UAttributeMenuWidgetController* AAuraHUD::GetAttributeMenuWidgetController(
 	{
 		AttributeMenuWidgetController = NewObject<UAttributeMenuWidgetController>(this, AttributeMenuWidgetControllerClass);
 		AttributeMenuWidgetController->SetWidgetControllerParams(WidgetControllerParams);
-		OverlayWidgetController->BindCallbacksToDependencies();
+		AttributeMenuWidgetController->BindCallbacksToDependencies();
 	}
 
 	return AttributeMenuWidgetController;
@@ -50,6 +50,4 @@ void AAuraHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySyst
 	OverlayWidgetController->BroadcastInitialValues();
 
 	OverlayWidget->AddToViewport();
-
-	AttributeMenuWidgetController->BroadcastInitialValues();
 }

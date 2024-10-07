@@ -14,6 +14,9 @@
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+//用在tag->attribute的map里，用一个delegate来代指一个getXXXAttribute函数
+DECLARE_DELEGATE_RetVal(FGameplayAttribute, FAttributeSignature);
+
 USTRUCT()
 struct FEffectProperties
 {
@@ -48,6 +51,11 @@ struct FEffectProperties
 	ACharacter* TargetCharacter = nullptr;
 };
 
+//typedef TBaseStaticDelegateInstance<FGameplayAttribute(), FDefaultDelegateUserPolicy>::FFuncPtr FAttributeFuncPtr;
+//下面这个方法通用性更强
+template<typename T>
+using TStaticFuncPtr = typename TBaseStaticDelegateInstance<T, FDefaultDelegateUserPolicy>::FFuncPtr;
+
 /**
  * 
  */
@@ -63,6 +71,13 @@ public:
 	//该函数用于 Clamping 操作
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
+	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
+	
+	//TBaseStaticDelegateInstance这部分可以理解为一个函数指针，等价于FGameplayAttribute(*)()，在给delegate bindStatic时传入的函数就会自动转换为FFuncPtr，这里抛弃delegate直接使用它省去delegate绑定相关的代码
+	//TMap<FGameplayTag, TBaseStaticDelegateInstance<FGameplayAttribute(), FDefaultDelegateUserPolicy>::FFuncPtr> TagsToAttributes;
+	//TMap<FGameplayTag, FAttributeSignature> TagsToAttributes;  //这个方法相比上面的方法要多一些delegate相关代码
+	//TBaseStaticDelegateInstance<FGameplayAttribute(), FDefaultDelegateUserPolicy>::FFuncPtr FunctionPointer;
 	
 	/*
 	 * Vital Attributes
