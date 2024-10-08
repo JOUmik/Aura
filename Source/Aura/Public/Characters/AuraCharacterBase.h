@@ -8,6 +8,7 @@
 #include "Interfaces/CombatInterface.h"
 #include "AuraCharacterBase.generated.h"
 
+class UGameplayAbility;
 class UGameplayEffect;
 class UAttributeSet;
 class UAbilitySystemComponent;
@@ -47,4 +48,9 @@ protected:
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffect, float Level) const;
 
 	void InitializeDefaultAttributes() const;
+
+	void AddCharacterAbilities();
+private:
+	UPROPERTY(EditAnywhere, Category = "CPP Settings|Attributes")
+	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 };
