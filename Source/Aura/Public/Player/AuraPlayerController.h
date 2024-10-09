@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "AuraPlayerController.generated.h"
 
+class UAuraAbilitySystemComponent;
 struct FGameplayTag;
 class UAuraInputConfiguration;
 class IEnemyInterface;
@@ -49,4 +50,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "CPP Settings|Input")
 	TObjectPtr<UAuraInputConfiguration> AuraInputConfiguration;
+
+	UPROPERTY()
+	TObjectPtr<UAuraAbilitySystemComponent> AuraAbilitySystemComponent;
+
+	UAuraAbilitySystemComponent* GetAbilitySystemComponent();
 };
