@@ -24,6 +24,7 @@ void UAuraAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf
 			GiveAbility(AbilitySpec);
 		}
 		//GiveAbilityAndActivateOnce(AbilitySpec);
+		
 	}
 }
 

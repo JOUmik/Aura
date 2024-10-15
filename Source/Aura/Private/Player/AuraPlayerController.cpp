@@ -4,15 +4,21 @@
 #include "Player/AuraPlayerController.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AuraGameplayTags.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameplayTagContainer.h"
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "Components/SplineComponent.h"
 #include "Input/AuraInputComponent.h"
 #include "Interfaces/EnemyInterface.h"
 
 AAuraPlayerController::AAuraPlayerController()
 {
 	bReplicates = true;
+
+	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
 }
 
 
@@ -41,6 +47,8 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 	Super::PlayerTick(DeltaTime);
 
 	CursorTrace();
+
+	AutoRun();
 }
 
 void AAuraPlayerController::SetupInputComponent()
@@ -128,23 +136,114 @@ void AAuraPlayerController::CursorTrace()
 	}
 }
 
+void AAuraPlayerController::AutoRun()
+{
+	if(!bAutoRunning) return;
+	if(APawn* ControlledPawn = GetPawn())
+	{
+		const FVector LocationOnSpline = Spline->FindLocationClosestToWorldLocation(ControlledPawn->GetActorLocation(), ESplineCoordinateSpace::World);
+		const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationOnSpline, ESplineCoordinateSpace::World);
+		ControlledPawn->AddMovementInput(Direction);
+
+		//判断是否到Spline终点
+		const float DistanceToDestination = (LocationOnSpline - CachedDestination).Length();
+		if(DistanceToDestination <= AutoRunAcceptanceRadius)
+		{
+			bAutoRunning = false;
+		}
+	}
+}
+
 void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
+	if(InputTag.MatchesTagExact(FAuraGameplayTags::Get().InputTag_LMB))
+	{
+		bTargeting = CurActor ? true : false;
+		bAutoRunning = false;
+	}
 }
 
 void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
-	if(UAuraAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
+	// 如果不是鼠标左键则触发对应键位的game ability逻辑
+	if(!InputTag.MatchesTagExact(FAuraGameplayTags::Get().InputTag_LMB))
 	{
-		AbilitySystemComponent->AbilityInputTagReleased(InputTag);
+		if(UAuraAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
+		{
+			AbilitySystemComponent->AbilityInputTagReleased(InputTag);
+		}
+
+		return;
+	}
+
+	//如果当前点击了某个敌人则触发鼠标左键的game ability逻辑
+	if(bTargeting)
+	{
+		if(UAuraAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
+		{
+			AbilitySystemComponent->AbilityInputTagReleased(InputTag);
+		}
+	}
+	// 如果鼠标轻击的话使用自动寻路
+	else
+	{
+		APawn* ControlledPawn = GetPawn();
+		if(FollowTime <= ShortPressThreshold && ControlledPawn)
+		{
+			if(UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination))
+			{
+				Spline->ClearSplinePoints();
+				for(const FVector& PointLocation : NavPath->PathPoints)
+				{
+					Spline->AddSplinePoint(PointLocation, ESplineCoordinateSpace::World);
+					DrawDebugSphere(GetWorld(), PointLocation, 8.f, 8.f, FColor::Green, false, 5.f);
+				}
+				CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() - 1];
+				bAutoRunning = true;
+			}
+		}
+
+		FollowTime = 0.f;
+		bTargeting = false;
 	}
 }
 
 void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
-	if(UAuraAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
+	// 如果不是鼠标左键则激活对应键位的game ability
+	if(!InputTag.MatchesTagExact(FAuraGameplayTags::Get().InputTag_LMB))
 	{
-		AbilitySystemComponent->AbilityInputTagHeld(InputTag);
+		if(UAuraAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
+		{
+			AbilitySystemComponent->AbilityInputTagHeld(InputTag);
+		}
+
+		return;
+	}
+	//如果当前点击了某个敌人则激活鼠标左键的game ability
+	if(bTargeting)
+	{
+		if(UAuraAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
+		{
+			AbilitySystemComponent->AbilityInputTagHeld(InputTag);
+		}
+	}
+	//否则鼠标左键用于寻路
+	else
+	{
+		FollowTime += GetWorld()->GetDeltaSeconds();
+
+		FHitResult Hit;
+		if(GetHitResultUnderCursor(ECC_Visibility, false, Hit))
+		{
+			CachedDestination = Hit.ImpactPoint;
+		}
+
+		if(APawn* ControlPawn = GetPawn())
+		{
+			const FVector WorldDirection = (CachedDestination - ControlPawn->GetActorLocation()).GetSafeNormal();
+			ControlPawn->AddMovementInput(WorldDirection);
+		}
 	}
 }
 

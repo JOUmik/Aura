@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "AuraPlayerController.generated.h"
 
+class USplineComponent;
 class UAuraAbilitySystemComponent;
 struct FGameplayTag;
 class UAuraInputConfiguration;
@@ -41,13 +42,16 @@ private:
 
 	
 	void CursorTrace();
-	IEnemyInterface* LastActor;
-	IEnemyInterface* CurActor;
 
 	void AbilityInputTagPressed(FGameplayTag InputTag);
 	void AbilityInputTagReleased(FGameplayTag InputTag);
 	void AbilityInputTagHeld(FGameplayTag InputTag);
 
+	void AutoRun();
+	
+	IEnemyInterface* LastActor;
+	IEnemyInterface* CurActor;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "CPP Settings|Input")
 	TObjectPtr<UAuraInputConfiguration> AuraInputConfiguration;
 
@@ -55,4 +59,18 @@ private:
 	TObjectPtr<UAuraAbilitySystemComponent> AuraAbilitySystemComponent;
 
 	UAuraAbilitySystemComponent* GetAbilitySystemComponent();
+
+	FVector CachedDestination = FVector::ZeroVector;
+	float FollowTime = 0;
+	float ShortPressThreshold = 0.5f;
+	bool bAutoRunning = false;
+	bool bTargeting = false;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "CPP Settings|Movement")
+	float AutoRunAcceptanceRadius = 50.f;
+
+	//Spline的用处是使得角色自动寻路的轨迹更加丝滑
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USplineComponent> Spline;
+	
 };
