@@ -51,6 +51,8 @@ private:
 	
 	IEnemyInterface* LastActor;
 	IEnemyInterface* CurActor;
+
+	FHitResult CursorHit;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "CPP Settings|Input")
 	TObjectPtr<UAuraInputConfiguration> AuraInputConfiguration;
