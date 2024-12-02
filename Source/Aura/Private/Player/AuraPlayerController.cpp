@@ -55,7 +55,8 @@ void AAuraPlayerController::SetupInputComponent()
 	if (UAuraInputComponent* InputComp = CastChecked<UAuraInputComponent>(InputComponent))
 	{
 		InputComp->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
-
+		InputComp->BindAction(ShiftAction, ETriggerEvent::Started, this, &AAuraPlayerController::ShiftPressed);
+		InputComp->BindAction(ShiftAction, ETriggerEvent::Completed, this, &AAuraPlayerController::ShiftReleased);
 		InputComp->BindAbilityActions(AuraInputConfiguration, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
 	}
 }
@@ -132,16 +133,11 @@ void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 		return;
 	}
 
-	//如果当前点击了某个敌人则触发鼠标左键的game ability逻辑
-	if(bTargeting)
+	if(UAuraAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
 	{
-		if(UAuraAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
-		{
-			AbilitySystemComponent->AbilityInputTagReleased(InputTag);
-		}
+		AbilitySystemComponent->AbilityInputTagReleased(InputTag);
 	}
-	// 如果鼠标轻击的话使用自动寻路
-	else
+	if(!bTargeting && !bShiftKeyDown)
 	{
 		APawn* ControlledPawn = GetPawn();
 		if(FollowTime <= ShortPressThreshold && ControlledPawn)
@@ -176,8 +172,8 @@ void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 
 		return;
 	}
-	//如果当前点击了某个敌人则激活鼠标左键的game ability
-	if(bTargeting)
+	//如果当前点击了某个敌人或者按住了shift则激活鼠标左键的game ability
+	if(bTargeting || bShiftKeyDown)
 	{
 		if(UAuraAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
 		{
