@@ -3,6 +3,7 @@
 
 #include "Actor/AuraProjectile.h"
 
+#include "Aura.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -16,6 +17,7 @@ AAuraProjectile::AAuraProjectile()
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("Sphere Component");
 	SetRootComponent(SphereComponent);
+	SphereComponent->SetCollisionObjectType(ECC_Projectile);
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	SphereComponent->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
