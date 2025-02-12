@@ -6,6 +6,8 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Components/AudioComponent.h"
 
 AAuraProjectile::AAuraProjectile()
 {
@@ -29,11 +31,50 @@ AAuraProjectile::AAuraProjectile()
 void AAuraProjectile::OnSphereComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (LoopingSoundComponent)
+	{
+		LoopingSoundComponent->Stop();
+	}
 	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+
+	if (HasAuthority())
+	{
+		Destroy();
+	}
+	else
+	{
+		bHitInClient = true;
+	}
 }
 
 void AAuraProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	SetLifeSpan(LifeSpan);
+
 	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AAuraProjectile::OnSphereComponentOverlap);
+
+	if (LoopingSound)
+	{
+		LoopingSoundComponent = UGameplayStatics::SpawnSoundAttached(LoopingSound, GetRootComponent());
+	}
+}
+
+//if the overlap event is triggered in the server, then the client would not run the overlap function, instead, when the projectile is destroyed, the Destroyed function would be called.
+//So consider this case, must also check whether the sound and effect are already played in the client, if not, play the sound and effect in this function 
+void AAuraProjectile::Destroyed()
+{
+	if (!bHitInClient && !HasAuthority())
+	{
+		if (LoopingSoundComponent)
+		{
+			LoopingSoundComponent->Stop();
+		}
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
+	}
+
+	Super::Destroyed();
 }

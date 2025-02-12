@@ -9,6 +9,7 @@
 class UNiagaraSystem;
 class UProjectileMovementComponent;
 class USphereComponent;
+class UAudioComponent;
 
 UCLASS()
 class AURA_API AAuraProjectile : public AActor
@@ -23,10 +24,17 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
 	UFUNCTION()
 	void OnSphereComponentOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
 private:
+    UPROPERTY(EditDefaultsOnly)
+    float LifeSpan = 15.f;
+
+	// this boolean variable is used to prevent the client destroy the projectile before effect and sound are played
+	bool bHitInClient = false;
+	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USphereComponent> SphereComponent;
 
@@ -35,4 +43,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "CPP Settings")
 	TObjectPtr<USoundBase> ImpactSound;
+
+	UPROPERTY(EditAnywhere, Category = "CPP Settings")
+	TObjectPtr<USoundBase> LoopingSound;
+
+	TObjectPtr<UAudioComponent> LoopingSoundComponent;
 };
