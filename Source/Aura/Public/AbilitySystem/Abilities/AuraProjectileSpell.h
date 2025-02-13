@@ -22,4 +22,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CPP Settings")
 	TSubclassOf<AAuraProjectile> ProjectileClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CPP Settings")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 };
